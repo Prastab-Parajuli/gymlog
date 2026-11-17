@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Progress</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <!-- Chart.js library, loaded from a CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body class="container">
+
+    <h1>Progress: <span th:text="${exercise.name}"></span></h1>
+    <p>Best weight so far: <strong th:text="${bestWeight}"></strong> kg</p>
+
+    <p th:if="${#lists.isEmpty(logs)}">No workouts logged for this exercise yet.</p>
+
+    <div th:unless="${#lists.isEmpty(logs)}" style="max-width: 700px;">
+        <canvas id="progressChart"></canvas>
+    </div>
+
+    <br>
+    <table class="table table-striped">
+        <tr><th>Date</th><th>Sets × Reps</th><th>Weight (kg)</th></tr>
+        <tr th:each="log : ${logs}">
+            <td th:text="${log.date}"></td>
+            <td th:text="${log.sets} + ' × ' + ${log.reps}"></td>
+            <td th:text="${log.weight}"></td>
+        </tr>
+    </table>
+
+    <a th:href="@{/loglist}">Back to list</a>
+
+    <script th:inline="javascript">
+        // Thymeleaf puts the lists from the controller into these variables
+        const labels = /*[[${labels}]]*/ [];
+        const weights = /*[[${weights}]]*/ [];
+
+        const canvas = document.getElementById('progressChart');
+        if (canvas) {
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Weight (kg)',
+                        data: weights,
+                        borderColor: '#198754',
+                        backgroundColor: '#198754',
+                        tension: 0.2
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { title: { display: true, text: 'Weight (kg)' } },
+                        x: { title: { display: true, text: 'Date' } }
+                    }
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>
