@@ -3,7 +3,17 @@
 A gym workout log built with Java and Spring Boot. Users record exercises, sets, reps
 and weight for each day, and view their progress over time as a table and a line chart.
 
-**Live demo:** _link added after deployment_
+**Live demo:** https://gymlog-48en.onrender.com
+
+> The app runs on free hosting and goes to sleep when idle. The first page load can take
+> up to a minute. Please wait and refresh if needed.
+
+**Demo accounts**
+
+| Username | Password | Role |
+|---|---|---|
+| user | user | USER |
+| admin | admin | ADMIN |
 
 ## Features
 
@@ -24,18 +34,30 @@ and weight for each day, and view their progress over time as a table and a line
 - Spring Data JPA and Spring Data REST
 - Spring Security with BCrypt password hashing
 - Bean Validation
-- MariaDB/MySQL (XAMPP) for local development, PostgreSQL online
+- MariaDB/MySQL (XAMPP) for local development, PostgreSQL (Neon) online
 - Bootstrap, Chart.js
 - JUnit 5, MockMvc and Spring Security Test
+- Docker, deployed on Render
 
 ## Spring Boot features beyond the lectures
 
-- **Actuator**: health check at `/actuator/health`
+- **Actuator**: health check at `/actuator/health`, also used by Render to monitor the app
 - **`@ControllerAdvice`**: central error handling with a custom error page
 - **Pagination** with `Pageable` and `PageRequest`
-- **Profiles**: separate settings for tests and for production
+- **Profiles**: separate settings for tests, local development and production
+- **Externalized configuration**: database credentials come from environment variables
 - **Chart.js** integration with Thymeleaf inline JavaScript
-- **Docker** deployment to Render
+- **Docker** multi-stage build and cloud deployment
+
+## Deployment
+
+- **Web app:** Render (free web service), built from the `Dockerfile` in this repository.
+  Every push to GitHub triggers a new deployment.
+- **Database:** Neon (serverless PostgreSQL).
+- The `prod` profile is activated in the Dockerfile. The database connection is set with
+  the environment variables `DB_URL`, `DB_USER` and `DB_PASSWORD` on Render, so no
+  passwords are stored in the source code.
+- Demo data is created on the first start when the database is empty.
 
 ## Running locally
 
@@ -43,12 +65,7 @@ and weight for each day, and view their progress over time as a table and a line
 2. Run `GymlogApplication` in VS Code, or run `./mvnw spring-boot:run`.
 3. Open http://localhost:8080 (the database `gymlog` is created automatically).
 
-Demo accounts:
-
-| Username | Password | Role |
-|---|---|---|
-| user | user | USER |
-| admin | admin | ADMIN |
+Log in with the demo accounts listed above.
 
 ## Running the tests
 
