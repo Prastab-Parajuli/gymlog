@@ -24,6 +24,9 @@
 
         <hr/>
     <a class="btn btn-dark" href="/oauth2/authorization/github">Log in with GitHub</a>
-
+    <div th:if="${param.registered}" style="color: green;">
+        Account created. You can now sign in.
+    </div>
+    <p><a th:href="@{/register}">Create an account</a></p>
 </body>
 </html>

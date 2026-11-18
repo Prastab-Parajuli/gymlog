@@ -8,9 +8,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.example.gymlog.model.WorkoutLog;
+import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 /** Database access for workouts, including searches by exercise and date, and paging. */
-
+@RepositoryRestResource(exported = false)
 public interface WorkoutLogRepository extends CrudRepository<WorkoutLog, Long> {
 
     List<WorkoutLog> findAllByOrderByDateDesc();
@@ -23,4 +24,11 @@ public interface WorkoutLogRepository extends CrudRepository<WorkoutLog, Long> {
 
         /** One page of workouts, newest first (id breaks ties so pages stay stable). */
     Page<WorkoutLog> findAllByOrderByDateDescIdDesc(Pageable pageable);
+
+        /** One page of one user's workouts, newest first. */
+    Page<WorkoutLog> findByOwnerOrderByDateDescIdDesc(String owner, Pageable pageable);
+
+    List<WorkoutLog> findByOwnerOrderByDateDesc(String owner);
+
+    List<WorkoutLog> findByExerciseIdAndOwnerOrderByDateAsc(Long exerciseId, String owner);
 }

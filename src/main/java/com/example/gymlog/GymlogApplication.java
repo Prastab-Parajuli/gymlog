@@ -40,12 +40,12 @@ public class GymlogApplication {
             Exercise deadlift = exerciseRepository.save(new Exercise("Deadlift", "Back"));
 
             LocalDate today = LocalDate.now();
-            logRepository.save(new WorkoutLog(today.minusDays(14), 3, 10, 50.0, bench));
-            logRepository.save(new WorkoutLog(today.minusDays(7), 3, 10, 55.0, bench));
-            logRepository.save(new WorkoutLog(today, 3, 8, 60.0, bench));
-            logRepository.save(new WorkoutLog(today.minusDays(7), 4, 8, 80.0, squat));
-            logRepository.save(new WorkoutLog(today, 4, 8, 85.0, squat));
-            logRepository.save(new WorkoutLog(today, 3, 5, 100.0, deadlift));
+            logRepository.save(new WorkoutLog(today.minusDays(14), 3, 10, 50.0, bench, "user"));
+            logRepository.save(new WorkoutLog(today.minusDays(7), 3, 10, 55.0, bench, "user"));
+            logRepository.save(new WorkoutLog(today, 3, 8, 60.0, bench, "user"));
+            logRepository.save(new WorkoutLog(today.minusDays(7), 4, 8, 80.0, squat, "user"));
+            logRepository.save(new WorkoutLog(today, 4, 8, 85.0, squat, "user"));
+            logRepository.save(new WorkoutLog(today, 3, 5, 100.0, deadlift, "user"));
 
             // Passwords can be set with environment variables on the server
             String userPw = System.getenv().getOrDefault("DEMO_USER_PASSWORD", "user");

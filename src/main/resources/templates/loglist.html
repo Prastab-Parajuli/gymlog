@@ -15,9 +15,11 @@
     </form>
     <br>
 
-    <table class="table table-striped">
+        <table class="table table-striped">
         <tr>
-            <th>Date</th><th>Exercise</th><th>Sets</th><th>Reps</th><th>Weight (kg)</th><th>Actions</th>
+            <th>Date</th><th>Exercise</th><th>Sets</th><th>Reps</th><th>Weight (kg)</th>
+            <th sec:authorize="hasRole('ADMIN')">Owner</th>
+            <th>Actions</th>
         </tr>
         <tr th:each="log : ${logs}">
             <td th:text="${log.date}"></td>
@@ -25,10 +27,12 @@
             <td th:text="${log.sets}"></td>
             <td th:text="${log.reps}"></td>
             <td th:text="${log.weight}"></td>
+            <td sec:authorize="hasRole('ADMIN')" th:text="${log.owner}"></td>
             <td>
                 <a th:href="@{/edit/{id}(id=${log.id})}">Edit</a>
-                <a class="btn btn-danger" sec:authorize="hasRole('ADMIN')"
-                   th:href="@{/delete/{id}(id=${log.id})}">Delete</a>
+                <form th:action="@{/delete/{id}(id=${log.id})}" method="post" style="display:inline">
+                    <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+                </form>
             </td>
         </tr>
     </table>

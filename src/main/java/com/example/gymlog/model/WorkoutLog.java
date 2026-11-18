@@ -13,7 +13,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-
+import jakarta.persistence.Column;
 
 /** One logged workout: date, sets, reps and weight for one exercise. */
 @Entity
@@ -40,6 +40,9 @@ public class WorkoutLog {
 
     @ManyToOne
     private Exercise exercise;
+        /** Username of the person who owns this workout. */
+    @Column(name = "owner_username")
+    private String owner;
 
     public WorkoutLog() {
     }
@@ -50,6 +53,11 @@ public class WorkoutLog {
         this.reps = reps;
         this.weight = weight;
         this.exercise = exercise;
+    }
+
+        public WorkoutLog(LocalDate date, int sets, int reps, double weight, Exercise exercise, String owner) {
+        this(date, sets, reps, weight, exercise);
+        this.owner = owner;
     }
 
     public Long getId() { return id; }
@@ -69,4 +77,7 @@ public class WorkoutLog {
 
     public Exercise getExercise() { return exercise; }
     public void setExercise(Exercise exercise) { this.exercise = exercise; }
+
+    public String getOwner() { return owner; }
+    public void setOwner(String owner) { this.owner = owner; }
 }

@@ -46,7 +46,8 @@ public class WorkoutLogRestTest {
 
     private MockMvc mockMvc;
     private Exercise bench;
-    private WorkoutLog log1;
+    private WorkoutLog log1;       // belongs to "user"
+    private WorkoutLog otherLog;   // belongs to someone else
 
     @BeforeEach
     public void setUp() {
@@ -58,8 +59,9 @@ public class WorkoutLogRestTest {
         erepository.deleteAll();
 
         bench = erepository.save(new Exercise("Bench Press", "Chest"));
-        log1 = repository.save(new WorkoutLog(LocalDate.of(2026, 10, 1), 3, 10, 50.0, bench));
-        repository.save(new WorkoutLog(LocalDate.of(2026, 10, 8), 3, 10, 55.0, bench));
+        log1 = repository.save(new WorkoutLog(LocalDate.of(2026, 10, 1), 3, 10, 50.0, bench, "user"));
+        repository.save(new WorkoutLog(LocalDate.of(2026, 10, 8), 3, 10, 55.0, bench, "user"));
+        otherLog = repository.save(new WorkoutLog(LocalDate.of(2026, 10, 9), 3, 10, 70.0, bench, "someoneelse"));
     }
 
     // Security
@@ -70,63 +72,99 @@ public class WorkoutLogRestTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER")
-    public void normalUserCannotDelete() throws Exception {
-        mockMvc.perform(get("/delete/" + log1.getId()))
-                .andExpect(status().isForbidden());
-
-        assertThat(repository.existsById(log1.getId())).isTrue();
-    }
-
-    @Test
-    @WithMockUser(roles = "ADMIN")
-    public void adminCanDelete() throws Exception {
-        mockMvc.perform(get("/delete/" + log1.getId()))
+    @WithMockUser(username = "user", roles = "USER")
+    public void userCanDeleteOwnWorkout() throws Exception {
+        mockMvc.perform(post("/delete/" + log1.getId()).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         assertThat(repository.existsById(log1.getId())).isFalse();
     }
 
+    @Test
+    @WithMockUser(username = "user", roles = "USER")
+    public void userCannotDeleteOthersWorkout() throws Exception {
+        mockMvc.perform(post("/delete/" + otherLog.getId()).with(csrf()))
+                .andExpect(status().isNotFound());
+
+        assertThat(repository.existsById(otherLog.getId())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void adminCanDeleteAnyWorkout() throws Exception {
+        mockMvc.perform(post("/delete/" + otherLog.getId()).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        assertThat(repository.existsById(otherLog.getId())).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = "USER")
+    public void userCannotEditOthersWorkout() throws Exception {
+        mockMvc.perform(get("/edit/" + otherLog.getId()))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(post("/save").with(csrf())
+                        .param("id", otherLog.getId().toString())
+                        .param("date", "2026-10-28")
+                        .param("sets", "3")
+                        .param("reps", "8")
+                        .param("weight", "999")
+                        .param("exerciseId", bench.getId().toString()))
+                .andExpect(status().isNotFound());
+
+        assertThat(repository.findById(otherLog.getId()).get().getWeight()).isEqualTo(70.0);
+    }
+
     // Your own REST endpoints
 
     @Test
-    @WithMockUser(roles = "USER")
-    public void getLogsShouldReturnJson() throws Exception {
+    @WithMockUser(username = "user", roles = "USER")
+    public void getLogsShouldReturnOnlyOwnLogs() throws Exception {
         mockMvc.perform(get("/logs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)));
     }
 
     @Test
-    @WithMockUser(roles = "USER")
-    public void getLogByIdShouldReturnLog() throws Exception {
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void adminGetsAllLogs() throws Exception {
+        mockMvc.perform(get("/logs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(3)));
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = "USER")
+    public void getLogByIdShouldReturnOwnLog() throws Exception {
         mockMvc.perform(get("/logs/" + log1.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.weight", is(50.0)))
+                .andExpect(jsonPath("$.owner", is("user")))
                 .andExpect(jsonPath("$.exercise.name", is("Bench Press")));
     }
 
-    // Spring Data REST (/api)
-
     @Test
-    @WithMockUser(roles = "USER")
-    public void apiGetLogsShouldReturnAll() throws Exception {
-        mockMvc.perform(get("/api/workoutLogs"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$._embedded.workoutLogs", hasSize(2)));
-    }
-
-    @Test
-    @WithMockUser(roles = "USER")
-    public void apiGetUnknownLogShouldReturnNotFound() throws Exception {
-        mockMvc.perform(get("/api/workoutLogs/999999"))
+    @WithMockUser(username = "user", roles = "USER")
+    public void getOthersLogByIdShouldReturnNotFound() throws Exception {
+        mockMvc.perform(get("/logs/" + otherLog.getId()))
                 .andExpect(status().isNotFound());
     }
-        // Progress page
+
+    // Workouts are no longer exposed by Spring Data REST (it would show everyone's data)
 
     @Test
-    @WithMockUser(roles = "USER")
-    public void progressPageShouldContainChartData() throws Exception {
+    @WithMockUser(username = "user", roles = "USER")
+    public void apiWorkoutLogsShouldNotBeExposed() throws Exception {
+        mockMvc.perform(get("/api/workoutLogs"))
+                .andExpect(status().isNotFound());
+    }
+
+    // Progress page
+
+    @Test
+    @WithMockUser(username = "user", roles = "USER")
+    public void progressPageShouldContainOnlyOwnChartData() throws Exception {
         mockMvc.perform(get("/progress/" + bench.getId()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("progress"))
@@ -134,10 +172,10 @@ public class WorkoutLogRestTest {
                 .andExpect(model().attribute("weights", hasSize(2)));
     }
 
-        // Error page
+    // Error page
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(username = "user", roles = "USER")
     public void unknownExerciseProgressShouldShowNotFoundPage() throws Exception {
         mockMvc.perform(get("/progress/999999"))
                 .andExpect(status().isNotFound())
@@ -147,7 +185,7 @@ public class WorkoutLogRestTest {
     // Validation
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(username = "user", roles = "USER")
     public void invalidFormShouldShowErrorsAndNotSave() throws Exception {
         mockMvc.perform(post("/save").with(csrf())
                         .param("date", "2026-10-28")
@@ -159,12 +197,12 @@ public class WorkoutLogRestTest {
                 .andExpect(view().name("logform"))
                 .andExpect(model().attributeHasFieldErrors("workoutLog", "sets"));
 
-        assertThat(repository.count()).isEqualTo(2);
+        assertThat(repository.count()).isEqualTo(3);
     }
 
     @Test
-    @WithMockUser(roles = "USER")
-    public void validFormShouldSaveAndRedirect() throws Exception {
+    @WithMockUser(username = "user", roles = "USER")
+    public void validFormShouldSaveWithCurrentUserAsOwner() throws Exception {
         mockMvc.perform(post("/save").with(csrf())
                         .param("date", "2026-10-28")
                         .param("sets", "3")
@@ -173,6 +211,7 @@ public class WorkoutLogRestTest {
                         .param("exerciseId", bench.getId().toString()))
                 .andExpect(status().is3xxRedirection());
 
-        assertThat(repository.count()).isEqualTo(3);
+        assertThat(repository.count()).isEqualTo(4);
+        assertThat(repository.findByOwnerOrderByDateDesc("user")).hasSize(3);
     }
 }

@@ -17,7 +17,7 @@ public class WebSecurityConfig {
     public SecurityFilterChain configure(HttpSecurity http, OAuth2UserServiceImpl oauthService) throws Exception {
         http
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/css/**", "/error", "/actuator/health").permitAll()
+                .requestMatchers("/css/**", "/error", "/actuator/health", "/register").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(formlogin -> formlogin

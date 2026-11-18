@@ -1,11 +1,10 @@
 package com.example.gymlog.controller;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -27,15 +26,16 @@ import jakarta.validation.Valid;
 /**
  * Handles the workout pages (list, add, edit, delete, progress)
  * and the JSON endpoints for workouts.
+ * Every user only sees their own workouts. Admins can see and delete everyone's.
  */
 @Controller
 public class WorkoutController {
 
     /** Number of workouts shown on one page of the list. */
+    private static final int PAGE_SIZE = 5;
 
     private final WorkoutLogRepository logRepository;
     private final ExerciseRepository exerciseRepository;
-    private static final int PAGE_SIZE = 5;
 
     public WorkoutController(WorkoutLogRepository logRepository,
                              ExerciseRepository exerciseRepository) {
@@ -55,14 +55,38 @@ public class WorkoutController {
         return "redirect:/loglist";
     }
 
+    // ---------- Ownership helpers ----------
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    }
+
+    /**
+     * Finds a workout the current user may use: their own, or any if they are an admin.
+     * Someone else's workout gives "not found", so its existence is not revealed.
+     */
+    private WorkoutLog findAllowedLog(Long id, Authentication authentication) {
+        WorkoutLog log = logRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Workout " + id + " was not found"));
+        if (!isAdmin(authentication) && !authentication.getName().equals(log.getOwner())) {
+            throw new ResourceNotFoundException("Workout " + id + " was not found");
+        }
+        return log;
+    }
+
     // ---------- Thymeleaf pages ----------
 
-        /** Shows one page of workouts (5 per page). */
+    /** Shows one page of workouts (5 per page). */
     @GetMapping("/loglist")
-    public String logList(@RequestParam(name = "page", defaultValue = "0") int page, Model model) {
+    public String logList(@RequestParam(name = "page", defaultValue = "0") int page,
+                          Authentication authentication, Model model) {
         int safePage = Math.max(page, 0);
-        Page<WorkoutLog> logPage =
-                logRepository.findAllByOrderByDateDescIdDesc(PageRequest.of(safePage, PAGE_SIZE));
+        PageRequest pageRequest = PageRequest.of(safePage, PAGE_SIZE);
+
+        Page<WorkoutLog> logPage = isAdmin(authentication)
+                ? logRepository.findAllByOrderByDateDescIdDesc(pageRequest)
+                : logRepository.findByOwnerOrderByDateDescIdDesc(authentication.getName(), pageRequest);
 
         model.addAttribute("logs", logPage.getContent());
         model.addAttribute("currentPage", safePage);
@@ -80,13 +104,11 @@ public class WorkoutController {
     }
 
     /** Shows the form filled with an existing workout. */
-        @GetMapping("/edit/{id}")
-        public String editLog(@PathVariable("id") Long id, Model model) {
-            WorkoutLog log = logRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Workout " + id + " was not found"));
-            model.addAttribute("workoutLog", log);
-            model.addAttribute("exercises", exerciseRepository.findAll());
-            return "logform";
+    @GetMapping("/edit/{id}")
+    public String editLog(@PathVariable("id") Long id, Authentication authentication, Model model) {
+        model.addAttribute("workoutLog", findAllowedLog(id, authentication));
+        model.addAttribute("exercises", exerciseRepository.findAll());
+        return "logform";
     }
 
     /**
@@ -97,6 +119,7 @@ public class WorkoutController {
     public String save(@Valid @ModelAttribute("workoutLog") WorkoutLog log,
                        BindingResult bindingResult,
                        @RequestParam("exerciseId") Long exerciseId,
+                       Authentication authentication,
                        Model model) {
 
         if (bindingResult.hasErrors()) {
@@ -104,27 +127,36 @@ public class WorkoutController {
             return "logform";
         }
 
+        if (log.getId() == null) {
+            log.setOwner(authentication.getName());            // new workout belongs to the current user
+        } else {
+            WorkoutLog existing = findAllowedLog(log.getId(), authentication);
+            log.setOwner(existing.getOwner());                 // an edit keeps the original owner
+        }
+
         log.setExercise(exerciseRepository.findById(exerciseId).orElse(null));
         logRepository.save(log);
         return "redirect:/loglist";
     }
 
-    /** Deletes a workout. Only users with the ADMIN role are allowed. */
-    @GetMapping("/delete/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String deleteLog(@PathVariable("id") Long id) {
-        logRepository.deleteById(id);
+    /** Deletes a workout. Allowed for its owner, and for admins. */
+    @PostMapping("/delete/{id}")
+    public String deleteLog(@PathVariable("id") Long id, Authentication authentication) {
+        WorkoutLog log = findAllowedLog(id, authentication);
+        logRepository.deleteById(log.getId());
         return "redirect:/loglist";
     }
 
     // ---------- Progress over time ----------
 
-    /** Shows the progress page: a table and a line chart of weight over time. */
+    /** Shows the progress page: a table and a line chart of the user's weight over time. */
     @GetMapping("/progress/{exerciseId}")
-    public String progress(@PathVariable("exerciseId") Long exerciseId, Model model) {
+    public String progress(@PathVariable("exerciseId") Long exerciseId,
+                           Authentication authentication, Model model) {
         Exercise exercise = exerciseRepository.findById(exerciseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Exercise " + exerciseId + " was not found"));
-        List<WorkoutLog> logs = logRepository.findByExerciseIdOrderByDateAsc(exerciseId);
+        List<WorkoutLog> logs =
+                logRepository.findByExerciseIdAndOwnerOrderByDateAsc(exerciseId, authentication.getName());
         double best = logs.stream().mapToDouble(WorkoutLog::getWeight).max().orElse(0);
 
         // Data for the Chart.js graph: dates on the x-axis, weights on the y-axis
@@ -141,17 +173,19 @@ public class WorkoutController {
 
     // ---------- REST (JSON) ----------
 
-    /** Returns all workouts as JSON. */
+    /** Returns the user's workouts as JSON (admins get everyone's). */
     @GetMapping("/logs")
     @ResponseBody
-    public Iterable<WorkoutLog> getLogsRest() {
-        return logRepository.findAll();
+    public Iterable<WorkoutLog> getLogsRest(Authentication authentication) {
+        return isAdmin(authentication)
+                ? logRepository.findAllByOrderByDateDesc()
+                : logRepository.findByOwnerOrderByDateDesc(authentication.getName());
     }
 
-    /** Returns one workout as JSON. */
+    /** Returns one workout as JSON, if it belongs to the user (or the user is an admin). */
     @GetMapping("/logs/{id}")
     @ResponseBody
-    public Optional<WorkoutLog> findLogRest(@PathVariable("id") Long id) {
-        return logRepository.findById(id);
+    public WorkoutLog findLogRest(@PathVariable("id") Long id, Authentication authentication) {
+        return findAllowedLog(id, authentication);
     }
 }
