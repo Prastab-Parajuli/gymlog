@@ -1,0 +1,241 @@
+/*
+ * GymLog theme: a small layer on top of Bootstrap.
+ * Colours come from Olympic bumper plates (red, blue, yellow, green, white),
+ * so the stripe at the top of each page reads as a row of plates.
+ * Change the colours in the :root block below and the whole site follows.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap');
+
+:root {
+    --gl-ink: #14213d;          /* text and table headers */
+    --gl-blue: #2349c9;         /* main accent: buttons, links */
+    --gl-blue-dark: #1a3aa3;    /* hover state */
+    --gl-red: #d62f2f;
+    --gl-yellow: #f2b705;
+    --gl-green: #1f9d55;
+    --gl-plate-white: #cfd6df;
+    --gl-page: #e9edf2;         /* page background */
+    --gl-line: #d5dbe3;         /* borders */
+    --gl-row: #f1f4f9;          /* striped table rows */
+}
+
+html {
+    background: var(--gl-page);
+}
+
+/* ---------- Page panel ---------- */
+
+body.container {
+    position: relative;
+    max-width: 980px;
+    margin: 2rem auto;
+    padding: 2.5rem 2.25rem 2rem;
+    background: #fff;
+    color: var(--gl-ink);
+    border: 1px solid var(--gl-line);
+    border-radius: 6px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    line-height: 1.55;
+}
+
+/* The row of plate colours across the top of every page */
+body.container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    border-radius: 6px 6px 0 0;
+    background: linear-gradient(90deg,
+        var(--gl-red) 0 20%,
+        var(--gl-blue) 20% 40%,
+        var(--gl-yellow) 40% 60%,
+        var(--gl-green) 60% 80%,
+        var(--gl-plate-white) 80% 100%);
+}
+
+/* ---------- Text ---------- */
+
+h1, h2, h3 {
+    font-family: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+    font-weight: 700;
+    color: var(--gl-ink);
+}
+
+h1 {
+    font-size: 2.6rem;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+}
+
+h3 {
+    font-size: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+a {
+    color: var(--gl-blue);
+}
+
+a:hover {
+    color: var(--gl-blue-dark);
+}
+
+/* ---------- Tables ---------- */
+
+.table {
+    --bs-table-border-color: var(--gl-line);
+    margin-top: 1rem;
+}
+
+.table-striped {
+    --bs-table-striped-bg: var(--gl-row);
+}
+
+table.table th {
+    background-color: var(--gl-ink);
+    color: #fff;
+    font-weight: 600;
+}
+
+table.table td,
+table.table th {
+    vertical-align: middle;
+}
+
+table.table td form {
+    display: inline;
+    margin-left: .5rem;
+}
+
+/* ---------- Forms ---------- */
+
+form > label,
+form div > label {
+    display: inline-block;
+    min-width: 8rem;
+    font-weight: 600;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+select {
+    padding: .45rem .65rem;
+    border: 1px solid #b9c2cf;
+    border-radius: 4px;
+    background: #fff;
+    color: var(--gl-ink);
+}
+
+/* Plain (unstyled) submit buttons, such as Save and Sign In */
+button:not(.btn),
+input[type="submit"] {
+    padding: .5rem 1.2rem;
+    border: 0;
+    border-radius: 4px;
+    background: var(--gl-blue);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button:not(.btn):hover,
+input[type="submit"]:hover {
+    background: var(--gl-blue-dark);
+}
+
+/* The Sign Out button is quieter than the main actions */
+form[action$="/logout"] input[type="submit"] {
+    background: transparent;
+    color: var(--gl-ink);
+    border: 1px solid var(--gl-ink);
+}
+
+form[action$="/logout"] input[type="submit"]:hover {
+    background: var(--gl-ink);
+    color: #fff;
+}
+
+/* Visible keyboard focus everywhere */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 3px solid var(--gl-yellow);
+    outline-offset: 2px;
+}
+
+/* ---------- Bootstrap buttons ---------- */
+
+.btn-success,
+.btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--gl-blue);
+    --bs-btn-border-color: var(--gl-blue);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--gl-blue-dark);
+    --bs-btn-hover-border-color: var(--gl-blue-dark);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--gl-blue-dark);
+    --bs-btn-active-border-color: var(--gl-blue-dark);
+}
+
+.btn-secondary {
+    --bs-btn-color: var(--gl-ink);
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: var(--gl-ink);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--gl-ink);
+    --bs-btn-hover-border-color: var(--gl-ink);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--gl-ink);
+    --bs-btn-active-border-color: var(--gl-ink);
+}
+
+.btn-danger {
+    --bs-btn-bg: var(--gl-red);
+    --bs-btn-border-color: var(--gl-red);
+}
+
+/* ---------- "View progress" list on the workout page ---------- */
+
+h3 + ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    padding: 0;
+    list-style: none;
+}
+
+h3 + ul li a {
+    display: inline-block;
+    padding: .3rem .9rem;
+    border: 1.5px solid var(--gl-blue);
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+h3 + ul li a:hover {
+    background: var(--gl-blue);
+    color: #fff;
+}
+
+/* ---------- Small screens ---------- */
+
+@media (max-width: 600px) {
+    body.container {
+        margin: 0;
+        padding: 2rem 1rem 1.5rem;
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+    }
+
+    h1 {
+        font-size: 2.1rem;
+    }
+}
