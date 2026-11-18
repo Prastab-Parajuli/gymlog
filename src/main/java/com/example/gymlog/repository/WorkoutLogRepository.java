@@ -22,10 +22,10 @@ public interface WorkoutLogRepository extends CrudRepository<WorkoutLog, Long> {
 
     List<WorkoutLog> findByDate(@Param("date") LocalDate date);
 
-        /** One page of workouts, newest first (id breaks ties so pages stay stable). */
+    /** One page of workouts, newest first (id breaks ties so pages stay stable). */
     Page<WorkoutLog> findAllByOrderByDateDescIdDesc(Pageable pageable);
 
-        /** One page of one user's workouts, newest first. */
+    /** One page of one user's workouts, newest first. */
     Page<WorkoutLog> findByOwnerOrderByDateDescIdDesc(String owner, Pageable pageable);
 
     List<WorkoutLog> findByOwnerOrderByDateDesc(String owner);

@@ -2,6 +2,7 @@ package com.example.gymlog.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -18,6 +19,9 @@ public class WebSecurityConfig {
         http
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/css/**", "/error", "/actuator/health", "/register").permitAll()
+                // Spring Data REST (/api): everyone logged in may read, only admins may change data
+                .requestMatchers(HttpMethod.GET, "/api/**").authenticated()
+                .requestMatchers("/api/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .formLogin(formlogin -> formlogin

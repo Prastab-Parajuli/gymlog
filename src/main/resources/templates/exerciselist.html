@@ -5,7 +5,6 @@
     <title>Exercises</title>
     <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/css/gymlog.css}">
-    
 </head>
 <body class="container">
 
@@ -20,11 +19,13 @@
             <td th:text="${ex.muscleGroup}"></td>
             <td>
                 <a th:href="@{/editexercise/{id}(id=${ex.id})}">Edit</a>
-                <a class="btn btn-danger" sec:authorize="hasRole('ADMIN')"
-                   th:href="@{/deleteexercise/{id}(id=${ex.id})}"
-                   onclick="return confirm('Delete this exercise and all its workouts?')">
-                    Delete
-                </a>
+                <!-- Delete is a POST form (not a link), and only admins see it -->
+                <form sec:authorize="hasRole('ADMIN')"
+                      th:action="@{/deleteexercise/{id}(id=${ex.id})}" method="post"
+                      style="display:inline"
+                      onsubmit="return confirm('Delete this exercise and all its workouts?')">
+                    <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+                </form>
             </td>
         </tr>
     </table>

@@ -25,12 +25,13 @@ You can also create your own account on the registration page, or log in with yo
 - Registration with validation, and login with a username and password or with GitHub
 - Workouts and progress are private: each user sees and changes only their own workouts
 - Two roles: `USER` manages their own workouts, `ADMIN` can also see and delete everyone's workouts
-- Exercises are a shared catalogue that all users can add to; only admins can delete them
+- Exercises are a shared catalogue that all users can add to; only admins can delete or change them through the REST API, and    only admins can delete them on the website
 - Input validation with error messages on the forms
 - RESTful JSON endpoints that return only the logged-in user's workouts
 - Paged workout list (5 per page)
 - Custom error page
 - Health check endpoint
+- All deletes are POST forms with CSRF protection
 
 ## Technologies
 
@@ -87,9 +88,9 @@ runs normally and only the GitHub button does not work.
 
 With XAMPP MySQL running: `./mvnw test`
 
-The tests use a separate database (`gymlog_test`), so the demo data is not touched.
-They cover the repositories, the REST endpoints, security rules, validation and the
-rule that users cannot see, edit or delete each other's workouts.
+They cover the repositories, the REST endpoints, security rules (including admin-only
+changes through `/api`), validation, registration, and the rule that users cannot see,
+edit or delete each other's workouts.
 
 ## REST API
 
@@ -97,7 +98,7 @@ rule that users cannot see, edit or delete each other's workouts.
 |---|---|
 | `GET /logs` | Your workouts as JSON (admins get all workouts) |
 | `GET /logs/{id}` | One of your workouts as JSON |
-| `/api/exercises` | Spring Data REST: exercises |
+| `/api/exercises` | Spring Data REST: exercises (everyone logged in can read, only admins can change) |
 | `GET /actuator/health` | Health check (public) |
 
 All addresses except the health check require login. Workouts are not exposed through

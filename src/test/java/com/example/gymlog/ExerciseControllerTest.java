@@ -106,7 +106,7 @@ public class ExerciseControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     public void normalUserCannotDeleteExercise() throws Exception {
-        mockMvc.perform(get("/deleteexercise/" + bench.getId()))
+        mockMvc.perform(post("/deleteexercise/" + bench.getId()).with(csrf()))
                 .andExpect(status().isForbidden());
 
         assertThat(erepository.existsById(bench.getId())).isTrue();
@@ -115,7 +115,7 @@ public class ExerciseControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     public void adminCanDeleteExercise() throws Exception {
-        mockMvc.perform(get("/deleteexercise/" + bench.getId()))
+        mockMvc.perform(post("/deleteexercise/" + bench.getId()).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         assertThat(erepository.existsById(bench.getId())).isFalse();

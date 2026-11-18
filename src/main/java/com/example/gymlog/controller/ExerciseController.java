@@ -42,7 +42,7 @@ public class ExerciseController {
     }
 
     /** Shows the form filled with an existing exercise. */
-        @GetMapping("/editexercise/{id}")
+    @GetMapping("/editexercise/{id}")
     public String edit(@PathVariable("id") Long id, Model model) {
         Exercise exercise = exerciseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Exercise " + id + " was not found"));
@@ -74,7 +74,7 @@ public class ExerciseController {
     }
 
     /** Deletes an exercise and all its workouts. Admin only. */
-    @GetMapping("/deleteexercise/{id}")
+    @PostMapping("/deleteexercise/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public String delete(@PathVariable("id") Long id) {
         exerciseRepository.deleteById(id);
