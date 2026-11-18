@@ -122,7 +122,11 @@ public class WorkoutController {
                        Authentication authentication,
                        Model model) {
 
+        Exercise exercise = exerciseRepository.findById(exerciseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise " + exerciseId + " was not found"));
+
         if (bindingResult.hasErrors()) {
+            log.setExercise(exercise);   // keeps the chosen exercise selected when the form is shown again
             model.addAttribute("exercises", exerciseRepository.findAll());
             return "logform";
         }
@@ -134,7 +138,7 @@ public class WorkoutController {
             log.setOwner(existing.getOwner());                 // an edit keeps the original owner
         }
 
-        log.setExercise(exerciseRepository.findById(exerciseId).orElse(null));
+            log.setExercise(exercise);
         logRepository.save(log);
         return "redirect:/loglist";
     }

@@ -4,16 +4,17 @@ import java.time.LocalDate;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import jakarta.persistence.Column;
 
 /** One logged workout: date, sets, reps and weight for one exercise. */
 @Entity
@@ -36,11 +37,13 @@ public class WorkoutLog {
     private int reps;
 
     @DecimalMin(value = "0.0", message = "Weight cannot be negative")
+    @DecimalMax(value = "1000.0", message = "Weight must be 1000 kg or less")
     private double weight;
 
     @ManyToOne
     private Exercise exercise;
-        /** Username of the person who owns this workout. */
+
+    /** Username of the person who owns this workout. */
     @Column(name = "owner_username")
     private String owner;
 
@@ -55,7 +58,7 @@ public class WorkoutLog {
         this.exercise = exercise;
     }
 
-        public WorkoutLog(LocalDate date, int sets, int reps, double weight, Exercise exercise, String owner) {
+    public WorkoutLog(LocalDate date, int sets, int reps, double weight, Exercise exercise, String owner) {
         this(date, sets, reps, weight, exercise);
         this.owner = owner;
     }
