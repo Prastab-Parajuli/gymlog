@@ -97,6 +97,9 @@ table.table th {
     background-color: var(--gl-ink);
     color: #fff;
     font-weight: 600;
+     --bs-table-bg-type: var(--gl-ink);
+    --bs-table-color-type: #fff;
+    box-shadow: none;
 }
 
 table.table td,
