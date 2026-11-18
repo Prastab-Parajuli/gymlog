@@ -138,7 +138,7 @@ public class WorkoutController {
             log.setOwner(existing.getOwner());                 // an edit keeps the original owner
         }
 
-            log.setExercise(exercise);
+        log.setExercise(exercise);
         logRepository.save(log);
         return "redirect:/loglist";
     }
