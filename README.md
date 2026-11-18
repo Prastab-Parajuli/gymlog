@@ -14,6 +14,7 @@ and weight for each day, and view their progress over time as a table and a line
 |---|---|---|
 | user | user | USER |
 | admin | admin | ADMIN |
+You can also log in with your own GitHub account.
 
 ## Features
 
@@ -38,6 +39,7 @@ and weight for each day, and view their progress over time as a table and a line
 - Bootstrap, Chart.js
 - JUnit 5, MockMvc and Spring Security Test
 - Docker, deployed on Render
+- Spring Security OAuth2 Client (GitHub login)
 
 ## Spring Boot features beyond the lectures
 
@@ -48,6 +50,7 @@ and weight for each day, and view their progress over time as a table and a line
 - **Externalized configuration**: database credentials come from environment variables
 - **Chart.js** integration with Thymeleaf inline JavaScript
 - **Docker** multi-stage build and cloud deployment
+- **OAuth2 / social login** with GitHub, with a custom user service that creates a local user on first login
 
 ## Deployment
 
